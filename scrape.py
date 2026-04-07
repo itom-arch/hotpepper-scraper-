@@ -1,6 +1,7 @@
 import asyncio
 import os
 import json
+import re
 from datetime import datetime, timezone, timedelta
 from playwright.async_api import async_playwright
 import gspread
@@ -32,20 +33,27 @@ SHEET_NAME = "\u30c7\u30fc\u30bf"
 async def fetch_salon(page, url):
     await page.goto(url, wait_until="domcontentloaded", timeout=30000)
     await page.wait_for_timeout(1500)
+
+    # \u30b5\u30ed\u30f3\u540d
     try:
         name = await page.title()
         name = name.split("\uff5c")[0].strip()
     except Exception:
         name = "\u4e0d\u660e"
+
+    # \u30af\u30c1\u30b3\u30df\u6570: div.slnHeaderKuchikomiCount \u306e\u300c\uff0831\u4ef6\uff09\u300d\u304b\u3089\u53d6\u5f97
     reviews = 0
     try:
-        html = await page.content()
-        import re
-        m = re.search(r'"reviewCount"\\s*:\\s*(\\d+)', html)
-        if m:
-            reviews = int(m.group(1))
+        el = await page.query_selector("div.slnHeaderKuchikomiCount")
+        if el:
+            text = await el.inner_text()
+            m = re.search(r'\d+', text.replace(',', ''))
+            if m:
+                reviews = int(m.group())
     except Exception:
         pass
+
+    # \u30d6\u30ed\u30b0\u6570: span.numberOfResult \u304b\u3089\u53d6\u5f97
     blogs = 0
     try:
         blog_url = url.rstrip("/") + "/blog/"
@@ -57,6 +65,7 @@ async def fetch_salon(page, url):
             blogs = int(text.strip().replace(",", ""))
     except Exception:
         pass
+
     return {"name": name, "reviews": reviews, "blogs": blogs}
 
 
