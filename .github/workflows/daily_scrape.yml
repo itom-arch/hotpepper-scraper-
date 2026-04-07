@@ -20,8 +20,7 @@ jobs:
       - name: 依存パッケージのインストール
         run: |
           pip install -r requirements.txt
-          playwright install chromium
-          playwright install-deps chromium
+          playwright install chromium --with-deps
 
       - name: スクレイピング実行
         env:
