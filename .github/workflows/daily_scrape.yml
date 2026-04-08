@@ -17,8 +17,9 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: SHEET名確認（デバッグ）
-        run: grep "SHEET_" scrape.py
+      - name: スクリプト内容確認（デバッグ）
+        run: |
+          grep -n "telColInner\|SHEET_VACANCY\|fetch_vacancy" scrape.py
 
       - name: 依存パッケージのインストール
         run: |
