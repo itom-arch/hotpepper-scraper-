@@ -66,20 +66,23 @@ def get_or_create_sheet(spreadsheet, sheet_name, salon_names):
         ws = spreadsheet.worksheet(sheet_name)
     except gspread.WorksheetNotFound:
         ws = spreadsheet.add_worksheet(title=sheet_name, rows=1000, cols=50)
-        header = [""] + salon_names
-        ws.append_row(header, value_input_option="USER_ENTERED")
-        ws.format("A1:A1", {"textFormat": {"bold": True}})
-        ws.format(f"B1:{chr(65 + len(salon_names))}1", {
+        # A1は空白（日付列）、B1以降に店舗名を書き込む
+        ws.update_cell(1, 1, "")
+        for i, name in enumerate(salon_names):
+            ws.update_cell(1, i + 2, name)
+        # ヘッダー書式: B1以降を青背景白文字
+        last_col = chr(65 + len(salon_names))
+        ws.format(f"B1:{last_col}1", {
             "backgroundColor": {"red": 0.29, "green": 0.29, "blue": 0.54},
             "textFormat": {"foregroundColor": {"red": 1, "green": 1, "blue": 1}, "bold": True}
         })
+        ws.format("A1:A1", {"textFormat": {"bold": True}})
     else:
         existing_header = ws.row_values(1)
         for name in salon_names:
             if name not in existing_header:
                 existing_header.append(name)
-                col = len(existing_header)
-                ws.update_cell(1, col, name)
+                ws.update_cell(1, len(existing_header), name)
     return ws
 
 
@@ -94,12 +97,18 @@ def write_to_sheets(results, today):
     gc = gspread.authorize(creds)
     sh = gc.open_by_key(spreadsheet_id)
     salon_names = [r["name"] for r in results]
+
+    # クチコミ数シート
     ws_review = get_or_create_sheet(sh, SHEET_REVIEW, salon_names)
+    # A列に日付、B列以降に数値
     review_row = [today] + [r["reviews"] for r in results]
     ws_review.append_row(review_row, value_input_option="USER_ENTERED")
+
+    # ブログ数シート
     ws_blog = get_or_create_sheet(sh, SHEET_BLOG, salon_names)
     blog_row = [today] + [r["blogs"] for r in results]
     ws_blog.append_row(blog_row, value_input_option="USER_ENTERED")
+
     print(f"✅ スプレッドシートに書き込み完了")
 
 
