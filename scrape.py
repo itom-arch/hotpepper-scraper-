@@ -63,13 +63,11 @@ async def fetch_salon(page, url):
 
 
 async def fetch_vacancy(page, url):
-    """\u76f4\u8fd114\u65e5\u5206\u306e\u65e5\u6b21\u7a7a\u304d\u67a0\u6570\u3092\u53d6\u5f97 {\u65e5\u4ed8: \u67a0\u6570}"""
     store_id_m = re.search(r'slnH(\d+)', url)
     if not store_id_m:
         return {}
     store_id = "H" + store_id_m.group(1)
 
-    # \u30af\u30fc\u30dd\u30f3\u9078\u629e\u30da\u30fc\u30b8\u304b\u3089couponId\u3092\u53d6\u5f97
     reserve_url = f"https://beauty.hotpepper.jp/CSP/kr/reserve/?storeId={store_id}"
     await page.goto(reserve_url, wait_until="domcontentloaded", timeout=30000)
     await page.wait_for_timeout(1500)
@@ -83,12 +81,10 @@ async def fetch_vacancy(page, url):
         return {}
     coupon_id = coupon_m.group(1)
 
-    # \u30ab\u30ec\u30f3\u30c0\u30fc\u30da\u30fc\u30b8\u3078
     cal_url = f"https://beauty.hotpepper.jp/CSP/kr/reserve/afterCoupon?storeId={store_id}&couponId={coupon_id}&add=0"
     await page.goto(cal_url, wait_until="domcontentloaded", timeout=30000)
     await page.wait_for_timeout(2000)
 
-    # \u65e5\u4ed8\u30d8\u30c3\u30c0\u3068\u7a7a\u304d\u67a0\u6570\u3092\u53d6\u5f97
     vacancy = {}
     try:
         result = await page.evaluate("""
@@ -98,37 +94,36 @@ async def fetch_vacancy(page, url):
             const rows = [...table.querySelectorAll('tr')];
             if (rows.length < 3) return {};
 
-            // row[0]: \u6708\u30d8\u30c3\u30c0\u30fc row[1]: \u65e5\u4ed8 row[2]: \u30c7\u30fc\u30bf(td\u304c338\u500b\u5165\u308b)
             const dateRow = rows[1];
             const dateCells = [...dateRow.querySelectorAll('th')];
 
-            // \u6708\u60c5\u5831\u3092row[0]\u304b\u3089\u53d6\u5f97
             const monthTh = rows[0].querySelector('th.monthCell');
             const monthText = monthTh ? monthTh.textContent.trim() : '';
-            const monthMatch = monthText.match(/(\d+)\u5e74(\d+)\u6708/);
+            const monthMatch = monthText.match(/(\\d+)\\u5e74(\\d+)\\u6708/);
             const year = monthMatch ? parseInt(monthMatch[1]) : new Date().getFullYear();
             const month = monthMatch ? parseInt(monthMatch[2]) : new Date().getMonth() + 1;
 
             const dates = dateCells.map(th => {
-                const m = th.textContent.trim().match(/(\d+)/);
+                const m = th.textContent.trim().match(/(\\d+)/);
                 return m ? parseInt(m[1]) : null;
             }).filter(d => d !== null);
 
             const numDates = dates.length;
             if (numDates === 0) return {};
 
-            // \u30c7\u30fc\u30bf\u884c(row[2])\u306etd\u3092\u65e5\u4ed8\u3054\u3068\u306b\u5206\u5272
             const dataRow = rows[2];
             const allTds = [...dataRow.querySelectorAll('td')];
-            const comaPerDay = Math.round(allTds.length / numDates);
+
+            // telColInner（お電話にてお問い合わせください）を除外
+            const realTds = allTds.filter(td => !td.classList.contains('telColInner'));
+            const comaPerDay = Math.round(realTds.length / numDates);
 
             const result = {};
             dates.forEach((day, i) => {
                 const start = i * comaPerDay;
                 const end = start + comaPerDay;
-                const dayTds = allTds.slice(start, end);
+                const dayTds = realTds.slice(start, end);
                 const openCount = dayTds.filter(td => td.classList.contains('open')).length;
-                // YYYY/MM/DD\u5f62\u5f0f
                 const mm = String(month).padStart(2, '0');
                 const dd = String(day).padStart(2, '0');
                 result[year + '/' + mm + '/' + dd] = openCount;
@@ -178,18 +173,13 @@ def write_to_sheets(results, vacancy_data, today):
     sh = gc.open_by_key(spreadsheet_id)
     salon_names = [r["name"] for r in results]
 
-    # \u30af\u30c1\u30b3\u30df\u6570\u30b7\u30fc\u30c8
     ws_review = get_or_create_sheet(sh, SHEET_REVIEW, salon_names)
     ws_review.append_row([today] + [r["reviews"] for r in results], value_input_option="USER_ENTERED")
 
-    # \u30d6\u30ed\u30b0\u6570\u30b7\u30fc\u30c8
     ws_blog = get_or_create_sheet(sh, SHEET_BLOG, salon_names)
     ws_blog.append_row([today] + [r["blogs"] for r in results], value_input_option="USER_ENTERED")
 
-    # \u7a7a\u304d\u67a0\u6570\u30b7\u30fc\u30c8: \u30d8\u30c3\u30c0\u30fc = [\u53d6\u5f97\u65e5, \u5bfe\u8c61\u65e5, \u5e97\u8217\u540d...]
     ws_vac = get_or_create_sheet(sh, SHEET_VACANCY, ["\u5bfe\u8c61\u65e5"] + salon_names)
-
-    # \u5168\u5e97\u8217\u306e\u5168\u65e5\u4ed8\u3092\u8ffd\u8a18
     all_dates = sorted(set(
         d for vac in vacancy_data.values() for d in vac.keys()
     ))
@@ -200,7 +190,6 @@ def write_to_sheets(results, vacancy_data, today):
             vac = vacancy_data.get(r["name"], {})
             row.append(vac.get(target_date, 0))
         rows_to_add.append(row)
-
     if rows_to_add:
         ws_vac.append_rows(rows_to_add, value_input_option="USER_ENTERED")
 
