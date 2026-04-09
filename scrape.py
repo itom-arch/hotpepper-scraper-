@@ -67,11 +67,9 @@ async def fetch_vacancy(page, url):
     if not store_id_m:
         return {}
     store_id = "H" + store_id_m.group(1)
-
     reserve_url = f"https://beauty.hotpepper.jp/CSP/kr/reserve/?storeId={store_id}"
     await page.goto(reserve_url, wait_until="domcontentloaded", timeout=30000)
     await page.wait_for_timeout(1500)
-
     coupon_link = await page.query_selector('a[href*="couponId"]')
     if not coupon_link:
         return {}
@@ -80,44 +78,33 @@ async def fetch_vacancy(page, url):
     if not coupon_m:
         return {}
     coupon_id = coupon_m.group(1)
-
     cal_url = f"https://beauty.hotpepper.jp/CSP/kr/reserve/afterCoupon?storeId={store_id}&couponId={coupon_id}&add=0"
     await page.goto(cal_url, wait_until="domcontentloaded", timeout=30000)
     await page.wait_for_timeout(2000)
-
     vacancy = {}
     try:
-        result = await page.evaluate("""
-        () => {
+        result = await page.evaluate("""() => {
             const table = document.querySelector('table');
             if (!table) return {};
             const rows = [...table.querySelectorAll('tr')];
             if (rows.length < 3) return {};
-
             const dateRow = rows[1];
             const dateCells = [...dateRow.querySelectorAll('th')];
-
             const monthTh = rows[0].querySelector('th.monthCell');
             const monthText = monthTh ? monthTh.textContent.trim() : '';
-            const monthMatch = monthText.match(/(\\d+)\\u5e74(\\d+)\\u6708/);
+            const monthMatch = monthText.match(/(\\d+)\u5e74(\\d+)\u6708/);
             const year = monthMatch ? parseInt(monthMatch[1]) : new Date().getFullYear();
             const month = monthMatch ? parseInt(monthMatch[2]) : new Date().getMonth() + 1;
-
             const dates = dateCells.map(th => {
                 const m = th.textContent.trim().match(/(\\d+)/);
                 return m ? parseInt(m[1]) : null;
             }).filter(d => d !== null);
-
             const numDates = dates.length;
             if (numDates === 0) return {};
-
             const dataRow = rows[2];
             const allTds = [...dataRow.querySelectorAll('td')];
-
-            // telColInner（お電話にてお問い合わせください）を除外
             const realTds = allTds.filter(td => !td.classList.contains('telColInner'));
             const comaPerDay = Math.round(realTds.length / numDates);
-
             const result = {};
             dates.forEach((day, i) => {
                 const start = i * comaPerDay;
@@ -129,12 +116,10 @@ async def fetch_vacancy(page, url):
                 result[year + '/' + mm + '/' + dd] = openCount;
             });
             return result;
-        }
-        """)
+        }""")
         vacancy = result if result else {}
     except Exception as e:
         print(f"vacancy error: {e}")
-
     return vacancy
 
 
@@ -165,24 +150,18 @@ def write_to_sheets(results, vacancy_data, today):
     spreadsheet_id = os.environ.get("SPREADSHEET_ID")
     if not creds_json or not spreadsheet_id:
         raise ValueError("\u74b0\u5883\u5909\u6570\u672a\u8a2d\u5b9a")
-
     creds_data = json.loads(creds_json)
     scopes = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     creds = Credentials.from_service_account_info(creds_data, scopes=scopes)
     gc = gspread.authorize(creds)
     sh = gc.open_by_key(spreadsheet_id)
     salon_names = [r["name"] for r in results]
-
     ws_review = get_or_create_sheet(sh, SHEET_REVIEW, salon_names)
     ws_review.append_row([today] + [r["reviews"] for r in results], value_input_option="USER_ENTERED")
-
     ws_blog = get_or_create_sheet(sh, SHEET_BLOG, salon_names)
     ws_blog.append_row([today] + [r["blogs"] for r in results], value_input_option="USER_ENTERED")
-
     ws_vac = get_or_create_sheet(sh, SHEET_VACANCY, ["\u5bfe\u8c61\u65e5"] + salon_names)
-    all_dates = sorted(set(
-        d for vac in vacancy_data.values() for d in vac.keys()
-    ))
+    all_dates = sorted(set(d for vac in vacancy_data.values() for d in vac.keys()))
     rows_to_add = []
     for target_date in all_dates:
         row = [today, target_date]
@@ -192,34 +171,29 @@ def write_to_sheets(results, vacancy_data, today):
         rows_to_add.append(row)
     if rows_to_add:
         ws_vac.append_rows(rows_to_add, value_input_option="USER_ENTERED")
-
-    print(f"\u2705 \u30b9\u30d7\u30ec\u30c3\u30c9\u30b7\u30fc\u30c8\u306b\u66f8\u304d\u8fbc\u307f\u5b8c\u4e86")
+    print(f"\u2705 \u5b8c\u4e86")
 
 
 async def main():
     jst = timezone(timedelta(hours=9))
     today = datetime.now(jst).strftime("%Y/%m/%d")
-
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-setuid-sandbox"])
         context = await browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             locale="ja-JP", viewport={"width": 1280, "height": 800})
         page = await context.new_page()
-
         results = []
         vacancy_data = {}
-
         for url in URLS:
             try:
                 result = await fetch_salon(page, url)
                 results.append(result)
-                print(f"\u2705 {result['name']}: \u30af\u30c1\u30b3\u30df{result['reviews']}\u4ef6, \u30d6\u30ed\u30b0{result['blogs']}\u4ef6")
+                print(f"\u2705 {result['name']}: \u30af\u30c1\u30b3\u30df{result['reviews']}\u4ef6 \u30d6\u30ed\u30b0{result['blogs']}\u4ef6")
             except Exception as e:
                 results.append({"name": "\u30a8\u30e9\u30fc", "reviews": "\u30a8\u30e9\u30fc", "blogs": "\u30a8\u30e9\u30fc"})
-                print(f"\u274c \u30a8\u30e9\u30fc: {url} / {e}")
+                print(f"\u274c {url}: {e}")
             await asyncio.sleep(2)
-
         for i, url in enumerate(URLS):
             name = results[i]["name"]
             try:
@@ -230,12 +204,9 @@ async def main():
                 vacancy_data[name] = {}
                 print(f"\u274c \u7a7a\u304d\u67a0\u30a8\u30e9\u30fc {name}: {e}")
             await asyncio.sleep(2)
-
         await browser.close()
-
     write_to_sheets(results, vacancy_data, today)
     print(f"\u5b8c\u4e86: {today}")
-
 
 if __name__ == "__main__":
     asyncio.run(main())
