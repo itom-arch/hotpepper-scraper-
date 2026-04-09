@@ -8,7 +8,7 @@ from playwright.async_api import async_playwright
 import gspread
 from google.oauth2.service_account import Credentials
 
-# ===== SILK 17Ã¥ÂºÂÃ¨ÂÂ =====
+# ===== SILK 17ÃÂ¥ÃÂºÃÂÃÂ¨ÃÂÃÂ =====
 URLS = [
     "https://beauty.hotpepper.jp/kr/slnH000806594/",
     "https://beauty.hotpepper.jp/kr/slnH000806453/",
@@ -29,7 +29,7 @@ URLS = [
     "https://beauty.hotpepper.jp/kr/slnH000790732/",
 ]
 
-# ===== TADASU 4Ã¥ÂºÂÃ¨ÂÂ =====
+# ===== TADASU 4ÃÂ¥ÃÂºÃÂÃÂ¨ÃÂÃÂ =====
 URLS_TADASU = [
     "https://beauty.hotpepper.jp/kr/slnH000729540/",
     "https://beauty.hotpepper.jp/kr/slnH000773320/",
@@ -37,11 +37,11 @@ URLS_TADASU = [
     "https://beauty.hotpepper.jp/kr/slnH000805329/",
 ]
 
-SHEET_REVIEW        = "(Ã¨ÂÂªÃ¥ÂÂÃ¦ÂÂ´Ã¦ÂÂ°)Ã£ÂÂ¯Ã£ÂÂÃ£ÂÂ³Ã£ÂÂÃ¦ÂÂ°"
-SHEET_BLOG          = "(Ã¨ÂÂªÃ¥ÂÂÃ¦ÂÂ´Ã¦ÂÂ°)Ã£ÂÂÃ£ÂÂ­Ã£ÂÂ°Ã¦ÂÂ°"
-SHEET_VACANCY       = "(Ã¨ÂÂªÃ¥ÂÂÃ¦ÂÂ´Ã¦ÂÂ°)Ã§Â©ÂºÃ£ÂÂÃ¦ÂÂ Ã¦ÂÂ°"
-SHEET_REVIEW_TADASU = "(Ã¨ÂÂªÃ¥ÂÂÃ¦ÂÂ´Ã¦ÂÂ°)Ã£ÂÂ¯Ã£ÂÂÃ£ÂÂ³Ã£ÂÂÃ¦ÂÂ°_TADASU"
-SHEET_BLOG_TADASU   = "(Ã¨ÂÂªÃ¥ÂÂÃ¦ÂÂ´Ã¦ÂÂ°)Ã£ÂÂÃ£ÂÂ­Ã£ÂÂ°Ã¦ÂÂ°_TADASU"
+SHEET_REVIEW        = "(ÃÂ¨ÃÂÃÂªÃÂ¥ÃÂÃÂÃÂ¦ÃÂÃÂ´ÃÂ¦ÃÂÃÂ°)ÃÂ£ÃÂÃÂ¯ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ³ÃÂ£ÃÂÃÂÃÂ¦ÃÂÃÂ°"
+SHEET_BLOG          = "(ÃÂ¨ÃÂÃÂªÃÂ¥ÃÂÃÂÃÂ¦ÃÂÃÂ´ÃÂ¦ÃÂÃÂ°)ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ­ÃÂ£ÃÂÃÂ°ÃÂ¦ÃÂÃÂ°"
+SHEET_VACANCY       = "(ÃÂ¨ÃÂÃÂªÃÂ¥ÃÂÃÂÃÂ¦ÃÂÃÂ´ÃÂ¦ÃÂÃÂ°)ÃÂ§ÃÂ©ÃÂºÃÂ£ÃÂÃÂÃÂ¦ÃÂÃÂ ÃÂ¦ÃÂÃÂ°"
+SHEET_REVIEW_TADASU = "(ÃÂ¨ÃÂÃÂªÃÂ¥ÃÂÃÂÃÂ¦ÃÂÃÂ´ÃÂ¦ÃÂÃÂ°)ÃÂ£ÃÂÃÂ¯ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ³ÃÂ£ÃÂÃÂÃÂ¦ÃÂÃÂ°_TADASU"
+SHEET_BLOG_TADASU   = "(ÃÂ¨ÃÂÃÂªÃÂ¥ÃÂÃÂÃÂ¦ÃÂÃÂ´ÃÂ¦ÃÂÃÂ°)ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ­ÃÂ£ÃÂÃÂ°ÃÂ¦ÃÂÃÂ°_TADASU"
 
 
 def col_letter(n):
@@ -53,7 +53,7 @@ def col_letter(n):
 
 
 def append_row_safe(ws, row_data):
-    """Aåãå«ãè¡ããããªãæ¸ãè¾¼ãï¼append_rowã®Aåç©ºç½æããåé¡ãåé¿ï¼"""
+    """AÃ¥ÂÂÃ£ÂÂÃ¥ÂÂ«Ã£ÂÂÃ¨Â¡ÂÃ£ÂÂÃ£ÂÂÃ£ÂÂÃ£ÂÂªÃ£ÂÂÃ¦ÂÂ¸Ã£ÂÂÃ¨Â¾Â¼Ã£ÂÂÃ¯Â¼Âappend_rowÃ£ÂÂ®AÃ¥ÂÂÃ§Â©ÂºÃ§ÂÂ½Ã¦ÂÂÃ£ÂÂÃ£ÂÂÃ¥ÂÂÃ©Â¡ÂÃ£ÂÂÃ¥ÂÂÃ©ÂÂ¿Ã¯Â¼Â"""
     all_values = ws.get_all_values()
     next_row = len(all_values) + 1
     end_col = col_letter(len(row_data))
@@ -61,7 +61,7 @@ def append_row_safe(ws, row_data):
 
 
 def append_rows_safe(ws, rows_data):
-    """è¤æ°è¡ãAåãããããªãæ¸ãè¾¼ã"""
+    """Ã¨Â¤ÂÃ¦ÂÂ°Ã¨Â¡ÂÃ£ÂÂAÃ¥ÂÂÃ£ÂÂÃ£ÂÂÃ£ÂÂÃ£ÂÂÃ£ÂÂªÃ£ÂÂÃ¦ÂÂ¸Ã£ÂÂÃ¨Â¾Â¼Ã£ÂÂ"""
     if not rows_data:
         return
     all_values = ws.get_all_values()
@@ -76,9 +76,9 @@ async def fetch_salon(page, url):
     await page.wait_for_timeout(1500)
     try:
         name = await page.title()
-        name = name.split("Ã¯Â½Â")[0].strip()
+        name = name.split("ÃÂ¯ÃÂ½ÃÂ")[0].strip()
     except Exception:
-        name = "Ã¤Â¸ÂÃ¦ÂÂ"
+        name = "ÃÂ¤ÃÂ¸ÃÂÃÂ¦ÃÂÃÂ"
     reviews = 0
     try:
         html = await page.content()
@@ -131,7 +131,7 @@ async def fetch_vacancy(page, url):
             const dateCells = [...dateRow.querySelectorAll('th')];
             const monthTh = rows[0].querySelector('th.monthCell');
             const monthText = monthTh ? monthTh.textContent.trim() : '';
-            const monthMatch = monthText.match(/(\\d+)Ã¥Â¹Â´(\\d+)Ã¦ÂÂ/);
+            const monthMatch = monthText.match(/(\\d+)ÃÂ¥ÃÂ¹ÃÂ´(\\d+)ÃÂ¦ÃÂÃÂ/);
             const year = monthMatch ? parseInt(monthMatch[1]) : new Date().getFullYear();
             const month = monthMatch ? parseInt(monthMatch[2]) : new Date().getMonth() + 1;
             const dates = dateCells.map(th => {
@@ -142,7 +142,7 @@ async def fetch_vacancy(page, url):
             if (numDates === 0) return {};
             const dataRow = rows[2];
             const allTds = [...dataRow.querySelectorAll('td')];
-            // telColInnerÃ¯Â¼ÂÃ£ÂÂÃ©ÂÂ»Ã¨Â©Â±Ã£ÂÂ«Ã£ÂÂ¦Ã£ÂÂÃ¥ÂÂÃ£ÂÂÃ¥ÂÂÃ£ÂÂÃ£ÂÂÃ£ÂÂÃ£ÂÂ Ã£ÂÂÃ£ÂÂÃ¯Â¼ÂÃ£ÂÂÃ©ÂÂ¤Ã¥Â¤Â
+            // telColInnerÃÂ¯ÃÂ¼ÃÂÃÂ£ÃÂÃÂÃÂ©ÃÂÃÂ»ÃÂ¨ÃÂ©ÃÂ±ÃÂ£ÃÂÃÂ«ÃÂ£ÃÂÃÂ¦ÃÂ£ÃÂÃÂÃÂ¥ÃÂÃÂÃÂ£ÃÂÃÂÃÂ¥ÃÂÃÂÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂÃÂ¯ÃÂ¼ÃÂÃÂ£ÃÂÃÂÃÂ©ÃÂÃÂ¤ÃÂ¥ÃÂ¤ÃÂ
             const realTds = allTds.filter(td => !td.classList.contains('telColInner'));
             const comaPerDay = Math.round(realTds.length / numDates);
             const result = {};
@@ -164,7 +164,7 @@ async def fetch_vacancy(page, url):
 
 
 def setup_salon_sheet(spreadsheet, sheet_name, salon_names):
-    """A1=Ã§Â©ÂºÃ§ÂÂ½, B1Ã¤Â»Â¥Ã©ÂÂ=Ã¥ÂºÂÃ¨ÂÂÃ¥ÂÂ"""
+    """A1=ÃÂ§ÃÂ©ÃÂºÃÂ§ÃÂÃÂ½, B1ÃÂ¤ÃÂ»ÃÂ¥ÃÂ©ÃÂÃÂ=ÃÂ¥ÃÂºÃÂÃÂ¨ÃÂÃÂÃÂ¥ÃÂÃÂ"""
     try:
         ws = spreadsheet.worksheet(sheet_name)
     except gspread.WorksheetNotFound:
@@ -180,13 +180,14 @@ def setup_salon_sheet(spreadsheet, sheet_name, salon_names):
 
 
 def setup_vacancy_sheet(spreadsheet, sheet_name, salon_names):
-    """A1=Ã§Â©ÂºÃ§ÂÂ½, B1=Ã¥ÂÂÃ¥Â¾ÂÃ¦ÂÂ¥, C1=Ã¥Â¯Â¾Ã¨Â±Â¡Ã¦ÂÂ¥, D1Ã¤Â»Â¥Ã©ÂÂ=Ã¥ÂºÂÃ¨ÂÂÃ¥ÂÂ"""
+    """A1=ÃÂ§ÃÂ©ÃÂºÃÂ§ÃÂÃÂ½, B1=ÃÂ¥ÃÂÃÂÃÂ¥ÃÂ¾ÃÂÃÂ¦ÃÂÃÂ¥, C1=ÃÂ¥ÃÂ¯ÃÂ¾ÃÂ¨ÃÂ±ÃÂ¡ÃÂ¦ÃÂÃÂ¥, D1ÃÂ¤ÃÂ»ÃÂ¥ÃÂ©ÃÂÃÂ=ÃÂ¥ÃÂºÃÂÃÂ¨ÃÂÃÂÃÂ¥ÃÂÃÂ"""
     try:
         ws = spreadsheet.worksheet(sheet_name)
     except gspread.WorksheetNotFound:
         ws = spreadsheet.add_worksheet(title=sheet_name, rows=10000, cols=60)
-        header = ["", "取得日", "対象日"] + salon_names
+        header = ["", "åå¾æ¥", "å¯¾è±¡æ¥"] + salon_names
         ws.update("A1", [header], value_input_option="USER_ENTERED")
+        last_col = col_letter(3 + len(salon_names))
         ws.format(f"B1:{last_col}1", {
             "backgroundColor": {"red": 0.29, "green": 0.29, "blue": 0.54},
             "textFormat": {"foregroundColor": {"red": 1, "green": 1, "blue": 1}, "bold": True}
@@ -198,16 +199,16 @@ def write_to_sheets(results, vacancy_data, results_tadasu, today, sh):
     salon_names = [r["name"] for r in results]
     salon_names_tadasu = [r["name"] for r in results_tadasu]
 
-    # SILK Ã£ÂÂ¯Ã£ÂÂÃ£ÂÂ³Ã£ÂÂÃ¦ÂÂ°: A1=Ã§Â©ÂºÃ§ÂÂ½, B1Ã¤Â»Â¥Ã©ÂÂ=Ã¥ÂºÂÃ¨ÂÂÃ¥ÂÂ, Ã£ÂÂÃ£ÂÂ¼Ã£ÂÂ¿Ã¨Â¡Â: A=Ã¦ÂÂ¥Ã¤Â»Â, BÃ¤Â»Â¥Ã©ÂÂ=Ã¦ÂÂ°Ã¥ÂÂ¤
+    # SILK ÃÂ£ÃÂÃÂ¯ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ³ÃÂ£ÃÂÃÂÃÂ¦ÃÂÃÂ°: A1=ÃÂ§ÃÂ©ÃÂºÃÂ§ÃÂÃÂ½, B1ÃÂ¤ÃÂ»ÃÂ¥ÃÂ©ÃÂÃÂ=ÃÂ¥ÃÂºÃÂÃÂ¨ÃÂÃÂÃÂ¥ÃÂÃÂ, ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ¼ÃÂ£ÃÂÃÂ¿ÃÂ¨ÃÂ¡ÃÂ: A=ÃÂ¦ÃÂÃÂ¥ÃÂ¤ÃÂ»ÃÂ, BÃÂ¤ÃÂ»ÃÂ¥ÃÂ©ÃÂÃÂ=ÃÂ¦ÃÂÃÂ°ÃÂ¥ÃÂÃÂ¤
     ws_review = setup_salon_sheet(sh, SHEET_REVIEW, salon_names)
     append_row_safe(ws_review, [today])
 
-    # SILK Ã£ÂÂÃ£ÂÂ­Ã£ÂÂ°Ã¦ÂÂ°
+    # SILK ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ­ÃÂ£ÃÂÃÂ°ÃÂ¦ÃÂÃÂ°
     ws_blog = setup_salon_sheet(sh, SHEET_BLOG, salon_names)
     append_row_safe(ws_blog, [today])
 
-    # SILK Ã§Â©ÂºÃ£ÂÂÃ¦ÂÂ Ã¦ÂÂ°: A1=Ã§Â©ÂºÃ§ÂÂ½, B1=Ã¥ÂÂÃ¥Â¾ÂÃ¦ÂÂ¥, C1=Ã¥Â¯Â¾Ã¨Â±Â¡Ã¦ÂÂ¥, D1Ã¤Â»Â¥Ã©ÂÂ=Ã¥ÂºÂÃ¨ÂÂÃ¥ÂÂ
-    # Ã£ÂÂÃ£ÂÂ¼Ã£ÂÂ¿Ã¨Â¡Â: A=Ã§Â©ÂºÃ§ÂÂ½, B=Ã¥ÂÂÃ¥Â¾ÂÃ¦ÂÂ¥, C=Ã¥Â¯Â¾Ã¨Â±Â¡Ã¦ÂÂ¥, DÃ¤Â»Â¥Ã©ÂÂ=Ã¦ÂÂ Ã¦ÂÂ°
+    # SILK ÃÂ§ÃÂ©ÃÂºÃÂ£ÃÂÃÂÃÂ¦ÃÂÃÂ ÃÂ¦ÃÂÃÂ°: A1=ÃÂ§ÃÂ©ÃÂºÃÂ§ÃÂÃÂ½, B1=ÃÂ¥ÃÂÃÂÃÂ¥ÃÂ¾ÃÂÃÂ¦ÃÂÃÂ¥, C1=ÃÂ¥ÃÂ¯ÃÂ¾ÃÂ¨ÃÂ±ÃÂ¡ÃÂ¦ÃÂÃÂ¥, D1ÃÂ¤ÃÂ»ÃÂ¥ÃÂ©ÃÂÃÂ=ÃÂ¥ÃÂºÃÂÃÂ¨ÃÂÃÂÃÂ¥ÃÂÃÂ
+    # ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ¼ÃÂ£ÃÂÃÂ¿ÃÂ¨ÃÂ¡ÃÂ: A=ÃÂ§ÃÂ©ÃÂºÃÂ§ÃÂÃÂ½, B=ÃÂ¥ÃÂÃÂÃÂ¥ÃÂ¾ÃÂÃÂ¦ÃÂÃÂ¥, C=ÃÂ¥ÃÂ¯ÃÂ¾ÃÂ¨ÃÂ±ÃÂ¡ÃÂ¦ÃÂÃÂ¥, DÃÂ¤ÃÂ»ÃÂ¥ÃÂ©ÃÂÃÂ=ÃÂ¦ÃÂÃÂ ÃÂ¦ÃÂÃÂ°
     ws_vac = setup_vacancy_sheet(sh, SHEET_VACANCY, salon_names)
     all_dates = sorted(set(d for vac in vacancy_data.values() for d in vac.keys()))
     rows_vac = []
@@ -219,15 +220,15 @@ def write_to_sheets(results, vacancy_data, results_tadasu, today, sh):
     if rows_vac:
         append_rows_safe(ws_vac, rows_vac, value_input_option="USER_ENTERED")
 
-    # TADASU Ã£ÂÂ¯Ã£ÂÂÃ£ÂÂ³Ã£ÂÂÃ¦ÂÂ°
+    # TADASU ÃÂ£ÃÂÃÂ¯ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ³ÃÂ£ÃÂÃÂÃÂ¦ÃÂÃÂ°
     ws_review_t = setup_salon_sheet(sh, SHEET_REVIEW_TADASU, salon_names_tadasu)
     append_row_safe(ws_review_t, [today])
 
-    # TADASU Ã£ÂÂÃ£ÂÂ­Ã£ÂÂ°Ã¦ÂÂ°
+    # TADASU ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ­ÃÂ£ÃÂÃÂ°ÃÂ¦ÃÂÃÂ°
     ws_blog_t = setup_salon_sheet(sh, SHEET_BLOG_TADASU, salon_names_tadasu)
     append_row_safe(ws_blog_t, [today])
 
-    print(f"Ã¢ÂÂ Ã¦ÂÂ¸Ã£ÂÂÃ¨Â¾Â¼Ã£ÂÂ¿Ã¥Â®ÂÃ¤ÂºÂ: {today}")
+    print(f"ÃÂ¢ÃÂÃÂ ÃÂ¦ÃÂÃÂ¸ÃÂ£ÃÂÃÂÃÂ¨ÃÂ¾ÃÂ¼ÃÂ£ÃÂÃÂ¿ÃÂ¥ÃÂ®ÃÂÃÂ¤ÃÂºÃÂ: {today}")
 
 
 async def main():
@@ -237,7 +238,7 @@ async def main():
     creds_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
     spreadsheet_id = os.environ.get("SPREADSHEET_ID")
     if not creds_json or not spreadsheet_id:
-        raise ValueError("Ã§ÂÂ°Ã¥Â¢ÂÃ¥Â¤ÂÃ¦ÂÂ°Ã¦ÂÂªÃ¨Â¨Â­Ã¥Â®Â")
+        raise ValueError("ÃÂ§ÃÂÃÂ°ÃÂ¥ÃÂ¢ÃÂÃÂ¥ÃÂ¤ÃÂÃÂ¦ÃÂÃÂ°ÃÂ¦ÃÂÃÂªÃÂ¨ÃÂ¨ÃÂ­ÃÂ¥ÃÂ®ÃÂ")
     creds_data = json.loads(creds_json)
     scopes = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     creds = Credentials.from_service_account_info(creds_data, scopes=scopes)
@@ -251,47 +252,47 @@ async def main():
             locale="ja-JP", viewport={"width": 1280, "height": 800})
         page = await context.new_page()
 
-        # SILK 17Ã¥ÂºÂÃ¨ÂÂ: Ã£ÂÂ¯Ã£ÂÂÃ£ÂÂ³Ã£ÂÂÃ£ÂÂ»Ã£ÂÂÃ£ÂÂ­Ã£ÂÂ°Ã¥ÂÂÃ¥Â¾Â
+        # SILK 17ÃÂ¥ÃÂºÃÂÃÂ¨ÃÂÃÂ: ÃÂ£ÃÂÃÂ¯ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ³ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ»ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ­ÃÂ£ÃÂÃÂ°ÃÂ¥ÃÂÃÂÃÂ¥ÃÂ¾ÃÂ
         results = []
         for url in URLS:
             try:
                 result = await fetch_salon(page, url)
                 results.append(result)
-                print(f"Ã¢ÂÂ {result['name']}: Ã£ÂÂ¯Ã£ÂÂÃ£ÂÂ³Ã£ÂÂ{result['reviews']}Ã¤Â»Â¶ Ã£ÂÂÃ£ÂÂ­Ã£ÂÂ°{result['blogs']}Ã¤Â»Â¶")
+                print(f"ÃÂ¢ÃÂÃÂ {result['name']}: ÃÂ£ÃÂÃÂ¯ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ³ÃÂ£ÃÂÃÂ{result['reviews']}ÃÂ¤ÃÂ»ÃÂ¶ ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ­ÃÂ£ÃÂÃÂ°{result['blogs']}ÃÂ¤ÃÂ»ÃÂ¶")
             except Exception as e:
-                results.append({"name": "Ã£ÂÂ¨Ã£ÂÂ©Ã£ÂÂ¼", "reviews": "Ã£ÂÂ¨Ã£ÂÂ©Ã£ÂÂ¼", "blogs": "Ã£ÂÂ¨Ã£ÂÂ©Ã£ÂÂ¼"})
-                print(f"Ã¢ÂÂ SILK {url}: {e}")
+                results.append({"name": "ÃÂ£ÃÂÃÂ¨ÃÂ£ÃÂÃÂ©ÃÂ£ÃÂÃÂ¼", "reviews": "ÃÂ£ÃÂÃÂ¨ÃÂ£ÃÂÃÂ©ÃÂ£ÃÂÃÂ¼", "blogs": "ÃÂ£ÃÂÃÂ¨ÃÂ£ÃÂÃÂ©ÃÂ£ÃÂÃÂ¼"})
+                print(f"ÃÂ¢ÃÂÃÂ SILK {url}: {e}")
             await asyncio.sleep(2)
 
-        # SILK 17Ã¥ÂºÂÃ¨ÂÂ: Ã§Â©ÂºÃ£ÂÂÃ¦ÂÂ Ã¥ÂÂÃ¥Â¾Â
+        # SILK 17ÃÂ¥ÃÂºÃÂÃÂ¨ÃÂÃÂ: ÃÂ§ÃÂ©ÃÂºÃÂ£ÃÂÃÂÃÂ¦ÃÂÃÂ ÃÂ¥ÃÂÃÂÃÂ¥ÃÂ¾ÃÂ
         vacancy_data = {}
         for i, url in enumerate(URLS):
             name = results[i]["name"]
             try:
                 vac = await fetch_vacancy(page, url)
                 vacancy_data[name] = vac
-                print(f"Ã¢ÂÂ Ã§Â©ÂºÃ£ÂÂÃ¦ÂÂ  {name}: {len(vac)}Ã¦ÂÂ¥Ã¥ÂÂ")
+                print(f"ÃÂ¢ÃÂÃÂ ÃÂ§ÃÂ©ÃÂºÃÂ£ÃÂÃÂÃÂ¦ÃÂÃÂ  {name}: {len(vac)}ÃÂ¦ÃÂÃÂ¥ÃÂ¥ÃÂÃÂ")
             except Exception as e:
                 vacancy_data[name] = {}
-                print(f"Ã¢ÂÂ Ã§Â©ÂºÃ£ÂÂÃ¦ÂÂ Ã£ÂÂ¨Ã£ÂÂ©Ã£ÂÂ¼ {name}: {e}")
+                print(f"ÃÂ¢ÃÂÃÂ ÃÂ§ÃÂ©ÃÂºÃÂ£ÃÂÃÂÃÂ¦ÃÂÃÂ ÃÂ£ÃÂÃÂ¨ÃÂ£ÃÂÃÂ©ÃÂ£ÃÂÃÂ¼ {name}: {e}")
             await asyncio.sleep(2)
 
-        # TADASU 4Ã¥ÂºÂÃ¨ÂÂ: Ã£ÂÂ¯Ã£ÂÂÃ£ÂÂ³Ã£ÂÂÃ£ÂÂ»Ã£ÂÂÃ£ÂÂ­Ã£ÂÂ°Ã¥ÂÂÃ¥Â¾Â
+        # TADASU 4ÃÂ¥ÃÂºÃÂÃÂ¨ÃÂÃÂ: ÃÂ£ÃÂÃÂ¯ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ³ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ»ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ­ÃÂ£ÃÂÃÂ°ÃÂ¥ÃÂÃÂÃÂ¥ÃÂ¾ÃÂ
         results_tadasu = []
         for url in URLS_TADASU:
             try:
                 result = await fetch_salon(page, url)
                 results_tadasu.append(result)
-                print(f"Ã¢ÂÂ TADASU {result['name']}: Ã£ÂÂ¯Ã£ÂÂÃ£ÂÂ³Ã£ÂÂ{result['reviews']}Ã¤Â»Â¶ Ã£ÂÂÃ£ÂÂ­Ã£ÂÂ°{result['blogs']}Ã¤Â»Â¶")
+                print(f"ÃÂ¢ÃÂÃÂ TADASU {result['name']}: ÃÂ£ÃÂÃÂ¯ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ³ÃÂ£ÃÂÃÂ{result['reviews']}ÃÂ¤ÃÂ»ÃÂ¶ ÃÂ£ÃÂÃÂÃÂ£ÃÂÃÂ­ÃÂ£ÃÂÃÂ°{result['blogs']}ÃÂ¤ÃÂ»ÃÂ¶")
             except Exception as e:
-                results_tadasu.append({"name": "Ã£ÂÂ¨Ã£ÂÂ©Ã£ÂÂ¼", "reviews": "Ã£ÂÂ¨Ã£ÂÂ©Ã£ÂÂ¼", "blogs": "Ã£ÂÂ¨Ã£ÂÂ©Ã£ÂÂ¼"})
-                print(f"Ã¢ÂÂ TADASU {url}: {e}")
+                results_tadasu.append({"name": "ÃÂ£ÃÂÃÂ¨ÃÂ£ÃÂÃÂ©ÃÂ£ÃÂÃÂ¼", "reviews": "ÃÂ£ÃÂÃÂ¨ÃÂ£ÃÂÃÂ©ÃÂ£ÃÂÃÂ¼", "blogs": "ÃÂ£ÃÂÃÂ¨ÃÂ£ÃÂÃÂ©ÃÂ£ÃÂÃÂ¼"})
+                print(f"ÃÂ¢ÃÂÃÂ TADASU {url}: {e}")
             await asyncio.sleep(2)
 
         await browser.close()
 
     write_to_sheets(results, vacancy_data, results_tadasu, today, sh)
-    print(f"Ã¥ÂÂ¨Ã¥ÂÂ¦Ã§ÂÂÃ¥Â®ÂÃ¤ÂºÂ: {today}")
+    print(f"ÃÂ¥ÃÂÃÂ¨ÃÂ¥ÃÂÃÂ¦ÃÂ§ÃÂÃÂÃÂ¥ÃÂ®ÃÂÃÂ¤ÃÂºÃÂ: {today}")
 
 
 if __name__ == "__main__":
