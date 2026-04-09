@@ -2,6 +2,7 @@ import asyncio
 import os
 import json
 import re
+import string
 from datetime import datetime, timezone, timedelta
 from playwright.async_api import async_playwright
 import gspread
@@ -30,6 +31,15 @@ URLS = [
 SHEET_REVIEW  = "(\u81ea\u52d5\u66f4\u65b0)\u30af\u30c1\u30b3\u30df\u6570"
 SHEET_BLOG    = "(\u81ea\u52d5\u66f4\u65b0)\u30d6\u30ed\u30b0\u6570"
 SHEET_VACANCY = "(\u81ea\u52d5\u66f4\u65b0)\u7a7a\u304d\u67a0\u6570"
+
+
+def col_letter(n):
+    """\u5217\u756a\u53f7(1\u59cb\u307e\u308a)\u3092\u30a2\u30eb\u30d5\u30a1\u30d9\u30c3\u30c8\u306b\u5909\u63db"""
+    result = ""
+    while n > 0:
+        n, r = divmod(n - 1, 26)
+        result = string.ascii_uppercase[r] + result
+    return result
 
 
 async def fetch_salon(page, url):
@@ -88,6 +98,7 @@ async def fetch_vacancy(page, url):
             if (!table) return {};
             const rows = [...table.querySelectorAll('tr')];
             if (rows.length < 3) return {};
+            // row[0]: \u6708\u30d8\u30c3\u30c0, row[1]: \u65e5\u4ed8, row[2]: \u30c7\u30fc\u30bf(td)
             const dateRow = rows[1];
             const dateCells = [...dateRow.querySelectorAll('th')];
             const monthTh = rows[0].querySelector('th.monthCell');
@@ -103,6 +114,7 @@ async def fetch_vacancy(page, url):
             if (numDates === 0) return {};
             const dataRow = rows[2];
             const allTds = [...dataRow.querySelectorAll('td')];
+            // telColInner\uff08\u304a\u96fb\u8a71\u306b\u3066\u304a\u554f\u3044\u5408\u308f\u305b\u304f\u3060\u3055\u3044\uff09\u3092\u9664\u5916
             const realTds = allTds.filter(td => !td.classList.contains('telColInner'));
             const comaPerDay = Math.round(realTds.length / numDates);
             const result = {};
@@ -123,25 +135,45 @@ async def fetch_vacancy(page, url):
     return vacancy
 
 
-def get_or_create_sheet(spreadsheet, sheet_name, header_row):
+def setup_vacancy_sheet(spreadsheet, sheet_name, salon_names):
+    """
+    \u7a7a\u304d\u67a0\u6570\u30b7\u30fc\u30c8\u306e\u30d8\u30c3\u30c0\u8a2d\u5b9a
+    A1=\u7a7a\u767d, B1=\u53d6\u5f97\u65e5, C1=\u5bfe\u8c61\u65e5, D1\u4ee5\u964d=\u5e97\u8217\u540d
+    """
     try:
         ws = spreadsheet.worksheet(sheet_name)
     except gspread.WorksheetNotFound:
-        ws = spreadsheet.add_worksheet(title=sheet_name, rows=10000, cols=50)
-        ws.update_cell(1, 1, "")
-        for i, h in enumerate(header_row):
-            ws.update_cell(1, i + 2, h)
-        last_col = chr(65 + len(header_row))
+        ws = spreadsheet.add_worksheet(title=sheet_name, rows=10000, cols=60)
+        ws.update_cell(1, 1, "")          # A1: \u7a7a\u767d
+        ws.update_cell(1, 2, "\u53d6\u5f97\u65e5")  # B1: \u53d6\u5f97\u65e5
+        ws.update_cell(1, 3, "\u5bfe\u8c61\u65e5")  # C1: \u5bfe\u8c61\u65e5
+        for i, name in enumerate(salon_names):
+            ws.update_cell(1, i + 4, name)  # D1\u4ee5\u964d: \u5e97\u8217\u540d
+        last_col = col_letter(3 + len(salon_names))
         ws.format(f"B1:{last_col}1", {
             "backgroundColor": {"red": 0.29, "green": 0.29, "blue": 0.54},
             "textFormat": {"foregroundColor": {"red": 1, "green": 1, "blue": 1}, "bold": True}
         })
-    else:
-        existing = ws.row_values(1)
-        for h in header_row:
-            if h not in existing:
-                existing.append(h)
-                ws.update_cell(1, len(existing), h)
+    return ws
+
+
+def setup_salon_sheet(spreadsheet, sheet_name, salon_names):
+    """
+    \u30af\u30c1\u30b3\u30df\u6570/\u30d6\u30ed\u30b0\u6570\u30b7\u30fc\u30c8\u306e\u30d8\u30c3\u30c0\u8a2d\u5b9a
+    A1=\u7a7a\u767d, B1\u4ee5\u964d=\u5e97\u8217\u540d
+    """
+    try:
+        ws = spreadsheet.worksheet(sheet_name)
+    except gspread.WorksheetNotFound:
+        ws = spreadsheet.add_worksheet(title=sheet_name, rows=1000, cols=50)
+        ws.update_cell(1, 1, "")
+        for i, name in enumerate(salon_names):
+            ws.update_cell(1, i + 2, name)
+        last_col = col_letter(1 + len(salon_names))
+        ws.format(f"B1:{last_col}1", {
+            "backgroundColor": {"red": 0.29, "green": 0.29, "blue": 0.54},
+            "textFormat": {"foregroundColor": {"red": 1, "green": 1, "blue": 1}, "bold": True}
+        })
     return ws
 
 
@@ -156,22 +188,30 @@ def write_to_sheets(results, vacancy_data, today):
     gc = gspread.authorize(creds)
     sh = gc.open_by_key(spreadsheet_id)
     salon_names = [r["name"] for r in results]
-    ws_review = get_or_create_sheet(sh, SHEET_REVIEW, salon_names)
+
+    # \u30af\u30c1\u30b3\u30df\u6570: A1=\u7a7a\u767d, B1\u4ee5\u964d=\u5e97\u8217\u540d, \u30c7\u30fc\u30bf\u884c: A=\u65e5\u4ed8, B\u4ee5\u964d=\u6570\u5024
+    ws_review = setup_salon_sheet(sh, SHEET_REVIEW, salon_names)
     ws_review.append_row([today] + [r["reviews"] for r in results], value_input_option="USER_ENTERED")
-    ws_blog = get_or_create_sheet(sh, SHEET_BLOG, salon_names)
+
+    # \u30d6\u30ed\u30b0\u6570
+    ws_blog = setup_salon_sheet(sh, SHEET_BLOG, salon_names)
     ws_blog.append_row([today] + [r["blogs"] for r in results], value_input_option="USER_ENTERED")
-    ws_vac = get_or_create_sheet(sh, SHEET_VACANCY, ["\u5bfe\u8c61\u65e5"] + salon_names)
+
+    # \u7a7a\u304d\u67a0\u6570: A1=\u7a7a\u767d, B1=\u53d6\u5f97\u65e5, C1=\u5bfe\u8c61\u65e5, D1\u4ee5\u964d=\u5e97\u8217\u540d
+    # \u30c7\u30fc\u30bf\u884c: A=\u7a7a\u767d, B=\u53d6\u5f97\u65e5, C=\u5bfe\u8c61\u65e5, D\u4ee5\u964d=\u6570\u5024
+    ws_vac = setup_vacancy_sheet(sh, SHEET_VACANCY, salon_names)
     all_dates = sorted(set(d for vac in vacancy_data.values() for d in vac.keys()))
     rows_to_add = []
     for target_date in all_dates:
-        row = [today, target_date]
+        row = ["", today, target_date]  # A=\u7a7a\u767d, B=\u53d6\u5f97\u65e5, C=\u5bfe\u8c61\u65e5
         for r in results:
             vac = vacancy_data.get(r["name"], {})
             row.append(vac.get(target_date, 0))
         rows_to_add.append(row)
     if rows_to_add:
         ws_vac.append_rows(rows_to_add, value_input_option="USER_ENTERED")
-    print(f"\u2705 \u5b8c\u4e86")
+
+    print(f"\u2705 \u5b8c\u4e86: {today}")
 
 
 async def main():
@@ -199,7 +239,7 @@ async def main():
             try:
                 vac = await fetch_vacancy(page, url)
                 vacancy_data[name] = vac
-                print(f"\u2705 \u7a7a\u304d\u67a0 {name}: {len(vac)}\u65e5\u5206")
+                print(f"\u2705 \u7a7a\u304d\u67a0 {name}: {len(vac)}\u65e5\u5206 {vac}")
             except Exception as e:
                 vacancy_data[name] = {}
                 print(f"\u274c \u7a7a\u304d\u67a0\u30a8\u30e9\u30fc {name}: {e}")
