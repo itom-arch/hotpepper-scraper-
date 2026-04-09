@@ -29,7 +29,7 @@ URLS = [
     "https://beauty.hotpepper.jp/kr/slnH000790732/",
 ]
 
-# ===== TADASU 4\u5e97\u8217 =====
+# ===== TADASU 4店舗 =====
 URLS_TADASU = [
     "https://beauty.hotpepper.jp/kr/slnH000729540/",
     "https://beauty.hotpepper.jp/kr/slnH000773320/",
@@ -37,11 +37,11 @@ URLS_TADASU = [
     "https://beauty.hotpepper.jp/kr/slnH000805329/",
 ]
 
-SHEET_REVIEW  = "(\u81ea\u52d5\u66f4\u65b0)\u30af\u30c1\u30b3\u30df\u6570"
-SHEET_BLOG    = "(\u81ea\u52d5\u66f4\u65b0)\u30d6\u30ed\u30b0\u6570"
-SHEET_VACANCY = "(\u81ea\u52d5\u66f4\u65b0)\u7a7a\u304d\u67a0\u6570"
-SHEET_REVIEW_TADASU = "(\u81ea\u52d5\u66f4\u65b0)\u30af\u30c1\u30b3\u30df\u6570_TADASU"
-SHEET_BLOG_TADASU   = "(\u81ea\u52d5\u66f4\u65b0)\u30d6\u30ed\u30b0\u6570_TADASU"
+SHEET_REVIEW        = "(自動更新)クチコミ数"
+SHEET_BLOG          = "(自動更新)ブログ数"
+SHEET_VACANCY       = "(自動更新)空き枠数"
+SHEET_REVIEW_TADASU = "(自動更新)クチコミ数_TADASU"
+SHEET_BLOG_TADASU   = "(自動更新)ブログ数_TADASU"
 
 
 def col_letter(n):
@@ -57,9 +57,9 @@ async def fetch_salon(page, url):
     await page.wait_for_timeout(1500)
     try:
         name = await page.title()
-        name = name.split("\uff5c")[0].strip()
+        name = name.split("｜")[0].strip()
     except Exception:
-        name = "\u4e0d\u660e"
+        name = "不明"
     reviews = 0
     try:
         html = await page.content()
@@ -112,7 +112,7 @@ async def fetch_vacancy(page, url):
             const dateCells = [...dateRow.querySelectorAll('th')];
             const monthTh = rows[0].querySelector('th.monthCell');
             const monthText = monthTh ? monthTh.textContent.trim() : '';
-            const monthMatch = monthText.match(/(\\d+)\u5e74(\\d+)\u6708/);
+            const monthMatch = monthText.match(/(\\d+)年(\\d+)月/);
             const year = monthMatch ? parseInt(monthMatch[1]) : new Date().getFullYear();
             const month = monthMatch ? parseInt(monthMatch[2]) : new Date().getMonth() + 1;
             const dates = dateCells.map(th => {
@@ -123,6 +123,7 @@ async def fetch_vacancy(page, url):
             if (numDates === 0) return {};
             const dataRow = rows[2];
             const allTds = [...dataRow.querySelectorAll('td')];
+            // telColInner（お電話にてお問い合わせください）を除外
             const realTds = allTds.filter(td => !td.classList.contains('telColInner'));
             const comaPerDay = Math.round(realTds.length / numDates);
             const result = {};
@@ -144,7 +145,7 @@ async def fetch_vacancy(page, url):
 
 
 def setup_salon_sheet(spreadsheet, sheet_name, salon_names):
-    """A1=\u7a7a\u767d, B1\u4ee5\u964d=\u5e97\u8217\u540d"""
+    """A1=空白, B1以降=店舗名"""
     try:
         ws = spreadsheet.worksheet(sheet_name)
     except gspread.WorksheetNotFound:
@@ -161,14 +162,14 @@ def setup_salon_sheet(spreadsheet, sheet_name, salon_names):
 
 
 def setup_vacancy_sheet(spreadsheet, sheet_name, salon_names):
-    """A1=\u7a7a\u767d, B1=\u53d6\u5f97\u65e5, C1=\u5bfe\u8c61\u65e5, D1\u4ee5\u964d=\u5e97\u8217\u540d"""
+    """A1=空白, B1=取得日, C1=対象日, D1以降=店舗名"""
     try:
         ws = spreadsheet.worksheet(sheet_name)
     except gspread.WorksheetNotFound:
         ws = spreadsheet.add_worksheet(title=sheet_name, rows=10000, cols=60)
         ws.update_cell(1, 1, "")
-        ws.update_cell(1, 2, "\u53d6\u5f97\u65e5")
-        ws.update_cell(1, 3, "\u5bfe\u8c61\u65e5")
+        ws.update_cell(1, 2, "取得日")
+        ws.update_cell(1, 3, "対象日")
         for i, name in enumerate(salon_names):
             ws.update_cell(1, i + 4, name)
         last_col = col_letter(3 + len(salon_names))
@@ -183,15 +184,16 @@ def write_to_sheets(results, vacancy_data, results_tadasu, today, sh):
     salon_names = [r["name"] for r in results]
     salon_names_tadasu = [r["name"] for r in results_tadasu]
 
-    # SILK \u30af\u30c1\u30b3\u30df\u6570
+    # SILK クチコミ数: A1=空白, B1以降=店舗名, データ行: A=日付, B以降=数値
     ws_review = setup_salon_sheet(sh, SHEET_REVIEW, salon_names)
     ws_review.append_row([today] + [r["reviews"] for r in results], value_input_option="USER_ENTERED")
 
-    # SILK \u30d6\u30ed\u30b0\u6570
+    # SILK ブログ数
     ws_blog = setup_salon_sheet(sh, SHEET_BLOG, salon_names)
     ws_blog.append_row([today] + [r["blogs"] for r in results], value_input_option="USER_ENTERED")
 
-    # SILK \u7a7a\u304d\u67a0\u6570
+    # SILK 空き枠数: A1=空白, B1=取得日, C1=対象日, D1以降=店舗名
+    # データ行: A=空白, B=取得日, C=対象日, D以降=枠数
     ws_vac = setup_vacancy_sheet(sh, SHEET_VACANCY, salon_names)
     all_dates = sorted(set(d for vac in vacancy_data.values() for d in vac.keys()))
     rows_vac = []
@@ -203,15 +205,15 @@ def write_to_sheets(results, vacancy_data, results_tadasu, today, sh):
     if rows_vac:
         ws_vac.append_rows(rows_vac, value_input_option="USER_ENTERED")
 
-    # TADASU \u30af\u30c1\u30b3\u30df\u6570
+    # TADASU クチコミ数
     ws_review_t = setup_salon_sheet(sh, SHEET_REVIEW_TADASU, salon_names_tadasu)
     ws_review_t.append_row([today] + [r["reviews"] for r in results_tadasu], value_input_option="USER_ENTERED")
 
-    # TADASU \u30d6\u30ed\u30b0\u6570
+    # TADASU ブログ数
     ws_blog_t = setup_salon_sheet(sh, SHEET_BLOG_TADASU, salon_names_tadasu)
     ws_blog_t.append_row([today] + [r["blogs"] for r in results_tadasu], value_input_option="USER_ENTERED")
 
-    print(f"\u2705 \u5b8c\u4e86: {today}")
+    print(f"✅ 書き込み完了: {today}")
 
 
 async def main():
@@ -221,7 +223,7 @@ async def main():
     creds_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
     spreadsheet_id = os.environ.get("SPREADSHEET_ID")
     if not creds_json or not spreadsheet_id:
-        raise ValueError("\u74b0\u5883\u5909\u6570\u672a\u8a2d\u5b9a")
+        raise ValueError("環境変数未設定")
     creds_data = json.loads(creds_json)
     scopes = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     creds = Credentials.from_service_account_info(creds_data, scopes=scopes)
@@ -235,46 +237,47 @@ async def main():
             locale="ja-JP", viewport={"width": 1280, "height": 800})
         page = await context.new_page()
 
-        # SILK 17\u5e97\u8217
+        # SILK 17店舗: クチコミ・ブログ取得
         results = []
-        vacancy_data = {}
         for url in URLS:
             try:
                 result = await fetch_salon(page, url)
                 results.append(result)
-                print(f"\u2705 {result['name']}: \u30af\u30c1\u30b3\u30df{result['reviews']}\u4ef6 \u30d6\u30ed\u30b0{result['blogs']}\u4ef6")
+                print(f"✅ {result['name']}: クチコミ{result['reviews']}件 ブログ{result['blogs']}件")
             except Exception as e:
-                results.append({"name": "\u30a8\u30e9\u30fc", "reviews": "\u30a8\u30e9\u30fc", "blogs": "\u30a8\u30e9\u30fc"})
-                print(f"\u274c SILK {url}: {e}")
+                results.append({"name": "エラー", "reviews": "エラー", "blogs": "エラー"})
+                print(f"❌ SILK {url}: {e}")
             await asyncio.sleep(2)
 
+        # SILK 17店舗: 空き枠取得
+        vacancy_data = {}
         for i, url in enumerate(URLS):
             name = results[i]["name"]
             try:
                 vac = await fetch_vacancy(page, url)
                 vacancy_data[name] = vac
-                print(f"\u2705 \u7a7a\u304d\u67a0 {name}: {len(vac)}\u65e5\u5206")
+                print(f"✅ 空き枠 {name}: {len(vac)}日分")
             except Exception as e:
                 vacancy_data[name] = {}
-                print(f"\u274c \u7a7a\u304d\u67a0\u30a8\u30e9\u30fc {name}: {e}")
+                print(f"❌ 空き枠エラー {name}: {e}")
             await asyncio.sleep(2)
 
-        # TADASU 4\u5e97\u8217
+        # TADASU 4店舗: クチコミ・ブログ取得
         results_tadasu = []
         for url in URLS_TADASU:
             try:
                 result = await fetch_salon(page, url)
                 results_tadasu.append(result)
-                print(f"\u2705 TADASU {result['name']}: \u30af\u30c1\u30b3\u30df{result['reviews']}\u4ef6 \u30d6\u30ed\u30b0{result['blogs']}\u4ef6")
+                print(f"✅ TADASU {result['name']}: クチコミ{result['reviews']}件 ブログ{result['blogs']}件")
             except Exception as e:
-                results_tadasu.append({"name": "\u30a8\u30e9\u30fc", "reviews": "\u30a8\u30e9\u30fc", "blogs": "\u30a8\u30e9\u30fc"})
-                print(f"\u274c TADASU {url}: {e}")
+                results_tadasu.append({"name": "エラー", "reviews": "エラー", "blogs": "エラー"})
+                print(f"❌ TADASU {url}: {e}")
             await asyncio.sleep(2)
 
         await browser.close()
 
     write_to_sheets(results, vacancy_data, results_tadasu, today, sh)
-    print(f"\u5168\u51e6\u7406\u5b8c\u4e86: {today}")
+    print(f"全処理完了: {today}")
 
 
 if __name__ == "__main__":
