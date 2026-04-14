@@ -51,8 +51,9 @@ def col_letter(n):
 
 
 def safe_write_row(ws, row_data):
-    all_values = ws.get_all_values()
-    next_row = len(all_values) + 1
+    # B列基準でカウント（A列が空白のシートでもずれない）
+    b_values = ws.col_values(2)
+    next_row = len(b_values) + 1
     end_col = col_letter(len(row_data))
     ws.update(f"A{next_row}:{end_col}{next_row}", [row_data])
 
@@ -60,8 +61,9 @@ def safe_write_row(ws, row_data):
 def safe_write_rows(ws, rows_data):
     if not rows_data:
         return
-    all_values = ws.get_all_values()
-    next_row = len(all_values) + 1
+    # B列基準でカウント（A列が空白のシートでもずれない）
+    b_values = ws.col_values(2)
+    next_row = len(b_values) + 1
     end_row = next_row + len(rows_data) - 1
     end_col = col_letter(len(rows_data[0]))
     ws.update(f"A{next_row}:{end_col}{end_row}", rows_data)
